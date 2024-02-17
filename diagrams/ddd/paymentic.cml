@@ -1,0 +1,113 @@
+
+ContextMap PaymentGateway{
+  type = SYSTEM_LANDSCAPE
+  state = TO_BE
+
+  contains PaymentProcessingContext
+  contains FinancialRecordingAndReportingContext
+  contains MerchantAccountManagementContext
+  contains IntegrationAndExternalCommunicationContext
+  contains FraudDetectionContext
+  contains RiskManagementContext
+
+  FraudDetectionContext [D,ACL]<- [U,OHS,PL] PaymentProcessingContext {
+		implementationTechnology = "KAFKA"
+		downstreamRights = INFLUENCER
+	}
+
+  RiskManagementContext [D,ACL] <- [U,OHS,PL]FraudDetectionContext{
+    implementationTechnology = "KAFKA"
+    downstreamRights = OPINION_LEADER
+  }
+
+  MerchantAccountManagementContext [D,ACL] <- [U,OHS,PL] PaymentProcessingContext{
+    implementationTechnology = "KAFKA"
+    downstreamRights = INFLUENCER
+  }
+
+  FinancialRecordingAndReportingContext [D,ACL] <- [U] MerchantAccountManagementContext{
+    implementationTechnology = "KAFKA"
+    downstreamRights = INFLUENCER
+  }
+
+  PaymentProcessingContext [D,ACL] <- [U]IntegrationAndExternalCommunicationContext{
+    implementationTechnology = "RESTful HTTP"
+  }
+
+}
+
+BoundedContext PaymentProcessingContext implements PaymentsDomain{
+  type = FEATURE
+  domainVisionStatement = "Handling of payment transactions from initiation to completion."
+  responsibilities = "Initiating payment events; Executing payment orders; Interfacing with PSPs; Handling transaction success or failure"
+  knowledgeLevel = CONCRETE
+  businessModel = "REVENUE"
+  evolution = CUSTOM_BUILT
+}
+
+BoundedContext FinancialRecordingAndReportingContext implements FinancialRecordsDomain {
+  type = FEATURE
+  domainVisionStatement = "Keeping track of financial transactions for accounting and analysis purposes."
+  responsibilities = "Recording debits and credits for each transaction; Generating financial reports; Supporting post-transaction analysis"
+  knowledgeLevel = CONCRETE
+  businessModel = "COMPLIANCE"
+  evolution = CUSTOM_BUILT
+}
+
+BoundedContext MerchantAccountManagementContext implements MerchantManagementDomain {
+  type = FEATURE
+  domainVisionStatement = "Managing merchant accounts and balances."
+  responsibilities = "Tracking merchant balances; Handling payouts; Recording total payments received per merchant"
+  knowledgeLevel = CONCRETE
+  businessModel = "ENGAGEMENT"
+  evolution = CUSTOM_BUILT
+}
+
+BoundedContext IntegrationAndExternalCommunicationContext {
+  type = FEATURE
+  domainVisionStatement = "Managing interactions with external systems like card schemes and banks."
+  responsibilities = "Facilitating communication and transactions with external financial systems; Handling protocols for different payment methods"
+  knowledgeLevel = CONCRETE
+}
+
+BoundedContext FraudDetectionContext implements FraudManagementDomain {
+  type = FEATURE
+  domainVisionStatement = "Identifying and mitigating fraudulent activities in payment transactions."
+  responsibilities = "Analyzing transaction patterns for fraud indicators; Alerting on suspicious activities; Blocking or flagging high-risk transactions; Updating fraud detection models based on new trends"
+  knowledgeLevel = CONCRETE
+  businessModel = "COMPLIANCE"
+  evolution = CUSTOM_BUILT
+}
+
+BoundedContext RiskManagementContext implements FraudManagementDomain {
+  type = FEATURE
+  domainVisionStatement = "Assessing and mitigating financial risks associated with payment processing and merchant activities."
+  responsibilities = "Evaluating transaction risk levels; Setting risk thresholds for transaction processing; Managing merchant risk profiles; Implementing risk mitigation strategies"
+  knowledgeLevel = CONCRETE
+  businessModel = "COMPLIANCE"
+  evolution = CUSTOM_BUILT
+}
+
+Domain PaymentGatewayDomain {
+
+  Subdomain PaymentsDomain {
+    type = CORE_DOMAIN
+    domainVisionStatement = "Core domain focused on processing and managing all payment transactions, including initiation, execution, and finalization of payments."
+  }
+
+  Subdomain FraudManagementDomain {
+    type = CORE_DOMAIN
+    domainVisionStatement = "Core domain dedicated to identifying, preventing, and managing fraudulent activities and transactions to ensure the security and integrity of the payment processes."
+  }
+
+  Subdomain MerchantManagementDomain {
+    type = SUPPORTING_DOMAIN
+    domainVisionStatement = "Supporting domain responsible for managing merchant accounts, including registration, account maintenance, balance tracking, and payout processing."
+  }
+
+  Subdomain FinancialRecordsDomain {
+    type = GENERIC_SUBDOMAIN
+    domainVisionStatement = "Generic subdomain tasked with maintaining financial records, including the recording of transactions, generation of financial reports, and support for financial analysis and reconciliation."
+  }
+
+}
